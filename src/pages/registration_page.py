@@ -1,6 +1,6 @@
 from selene import be, have, browser, by
 
-from data.users import Users, student
+from data.users import Users
 from path_config import TEST_FILE_PATH
 
 
@@ -20,26 +20,15 @@ class RegistrationPage:
         self.submit_button = browser.element("#submit")
     
     @staticmethod
-    def open_browser():
+    def open_page():
         browser.open("/automation-practice-form")
-    
-    @staticmethod
-    def delete_banners():
-        browser.driver.execute_script("$('#fixedban').remove()")
-        browser.driver.execute_script("$('footer').remove()")
     
     @staticmethod
     def _get_gender_input(gender):
         return browser.element(
             by.xpath(f"//input[@value='{gender}']/ancestor::div[contains(@class, 'custom-control')]"))
     
-    @staticmethod
-    def _get_hobbies_input(hobby):
-        return browser.element(by.xpath(
-            f"//label[@class='custom-control-label' and text()='{hobby}']"
-            "/ancestor::div[contains(@class, 'custom-checkbox')]"))
-    
-    def _fill_date_from_calendar(self, day, month, year):
+    def _set_date_from_calendar(self, day, month, year):
         self.birth_date_input.click()
         browser.element(by.xpath("//select[@class = 'react-datepicker__year-select']")).click().element(
             by.xpath(f"//option[text() = '{year}']")
@@ -49,20 +38,23 @@ class RegistrationPage:
         browser.element(
             by.xpath(f"//div[contains(@class, 'react-datepicker__day') and text() = '{day}']")).click()
     
-    def _fill_hobbies(self, hobbies: tuple):
+    @staticmethod
+    def _set_hobbies(hobbies: tuple):
         """
 
         :param hobbies: Sports, Reading or Music
 
         """
-        for i in hobbies:
-            self._get_hobbies_input(i).should(be.clickable).click()
+        for hobby in hobbies:
+            browser.element(by.xpath(
+                f"//label[@class='custom-control-label' and text()='{hobby}']"
+                "/ancestor::div[contains(@class, 'custom-checkbox')]")).should(be.clickable).click()
     
-    def _choose_state(self, option):
+    def _set_state(self, option):
         self.state_list.click()
         browser.element(f"//div[contains(@id, 'react-select-3-option') and contains(text(), '{option}')]").click()
     
-    def _choose_city(self, option):
+    def _set_city(self, option):
         self.city_list.click()
         browser.element(f"//div[contains(@id, 'react-select-4-option') and contains(text(), '{option}')]").click()
     
@@ -72,18 +64,21 @@ class RegistrationPage:
          .should(have.text(expected_value)))
     
     def fill_form(self, user: Users):
+        browser.driver.execute_script("$('#fixedban').remove()")
+        browser.driver.execute_script("$('footer').remove()")
         self.first_name_input.should(be.blank).type(user.name)
         self.last_name_input.should(be.blank).type(user.surname)
         self.email_input.should(be.blank).type(user.email)
         self._get_gender_input(user.gender).click()
         self.phone_number.type(user.number)
-        self._fill_date_from_calendar(user.day, user.month, user.year)
+        self._set_date_from_calendar(user.day, user.month, user.year)
         self.subject_input.type(user.subject).press_enter()
-        self._fill_hobbies(user.hobby)
+        self._set_hobbies(user.hobby)
         self.upload_file_button.type(TEST_FILE_PATH)
         self.current_address_input.type(user.address)
-        self._choose_state(user.state)
-        self._choose_city(user.city)
+        self._set_state(user.state)
+        self._set_city(user.city)
+        self.submit_button.click()
     
     def assert_registered(self, user: Users):
         self._assert_user_data("Student Name", f"{user.name} {user.surname}")

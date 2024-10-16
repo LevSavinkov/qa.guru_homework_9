@@ -2,8 +2,8 @@ from config import *
 
 from src.pages.registration_page import RegistrationPage
 
-
 registration_page = RegistrationPage()
+
 
 def test_fill_form():
     registration_page.open_browser()
